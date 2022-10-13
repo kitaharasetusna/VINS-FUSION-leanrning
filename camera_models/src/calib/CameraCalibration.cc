@@ -18,6 +18,9 @@
 #include "camodocal/camera_models/CostFunctionFactory.h"
 
 #include "ceres/ceres.h"
+
+#include <opencv2/imgproc/imgproc_c.h>
+
 namespace camodocal
 {
 
@@ -250,12 +253,12 @@ CameraCalibration::drawResults(std::vector<cv::Mat>& images) const
             cv::circle(image,
                        cv::Point(cvRound(pObs.x * drawMultiplier),
                                  cvRound(pObs.y * drawMultiplier)),
-                       5, green, 2, CV_AA, drawShiftBits);
+                       5, green, 2, cv::LINE_AA, drawShiftBits);
 
             cv::circle(image,
                        cv::Point(cvRound(pEst.x * drawMultiplier),
                                  cvRound(pEst.y * drawMultiplier)),
-                       5, red, 2, CV_AA, drawShiftBits);
+                       5, red, 2, cv::LINE_AA, drawShiftBits);
 
             float error = cv::norm(pObs - pEst);
 
@@ -272,7 +275,7 @@ CameraCalibration::drawResults(std::vector<cv::Mat>& images) const
 
         cv::putText(image, oss.str(), cv::Point(10, image.rows - 10),
                     cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 255, 255),
-                    1, CV_AA);
+                    1, cv::LINE_AA);
     }
 }
 

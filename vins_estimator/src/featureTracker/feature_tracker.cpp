@@ -10,6 +10,7 @@
  *******************************************************/
 
 #include "feature_tracker.h"
+#include <opencv2/imgproc/imgproc_c.h>
 
 
 // 好像是返回时候在图像边界内
@@ -144,9 +145,8 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         if(hasPrediction)
         {
             cur_pts = predict_pts; //当前的点等于上一次的点
-            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 1); 
-            //迭代算法的终止条件
-            cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01), cv::OPTFLOW_USE_INITIAL_FLOW);
+            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 1,
+            cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01), cv::OPTFLOW_USE_INITIAL_FLOW);//迭代算法的终止条件
                 
             int succ_num = 0;//成功和上一阵匹配的数目
             for (size_t i = 0; i < status.size(); i++)
@@ -425,7 +425,7 @@ void FeatureTracker::readIntrinsicParameter(const vector<string> &calib_file)
         ROS_INFO("reading paramerter of camera %s", calib_file[i].c_str());
             //[ INFO] [1574931791.324250184]: reading paramerter of camera 4VINS_test/0config/yaml_mynt_s1030/params_left_my.yaml
         //定义了一个camera类
-        camodocal::CammeraPtr camera = CameraFactory::instance()->generateCameraFromYamlFile(calib_file[i]);
+        camodocal::CameraPtr camera = CameraFactory::instance()->generateCameraFromYamlFile(calib_file[i]);
         m_camera.push_back(camera);
     }
     if (calib_file.size() == 2)
@@ -599,7 +599,7 @@ void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)
     map<int, Eigen::Vector3d>::iterator itPredict;
     for (size_t i = 0; i < ids.size(); i++)
     {
-        printf("prevLeftId size %d prevLeftPts size %d\n",(int)prevLeftIds.size(), (int)prevLeftPts.size());
+        // printf("prevLeftId size %d prevLeftPts size %d\n",(int)prevLeftIds.size(), (int)prevLeftPts.size());
         int id = ids[i];
         itPredict = predictPts.find(id);
         if (itPredict != predictPts.end())

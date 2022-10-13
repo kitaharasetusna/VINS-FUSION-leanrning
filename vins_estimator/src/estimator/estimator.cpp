@@ -424,7 +424,7 @@ void Estimator::processIMU(double t, double dt, const Vector3d &linear_accelerat
 
     //f rame_count是窗内图像帧的计数
     // 一个窗内有是个相机帧，每个相机帧之间又有多个IMU数据
-    if (frame_cobunt != 0)
+    if (frame_count != 0)
     {
         pre_integrations[frame_count]->push_back(dt, linear_acceleration, angular_velocity);
         // push_back进行了重载，的时候就已经进行了预积分
