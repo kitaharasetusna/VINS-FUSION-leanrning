@@ -373,6 +373,7 @@ void Estimator::processMeasurements()
 }
 
 //初始第一个imu位姿
+// 其实很简单,就是求一个姿态角,然后把航向角设为0
 void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVector)
 {
     printf("init first imu pose\n");

@@ -125,7 +125,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
     row = cur_img.rows;
     col = cur_img.cols;
     cv::Mat rightImg = _img1;
-    /*//TODO: 这里使用来做图像处理的！！！
+    /*//TODO: 这里使用来做图像处理的！！！ 代码中没有使用
     {
         cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));//createCLAHE 直方图均衡
         clahe->apply(cur_img, cur_img);
