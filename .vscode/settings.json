@@ -1,11 +1,27 @@
 {
-    "cmake.configureOnOpen": false,
     "files.associations": {
+        "*.ipp": "cpp",
+        "array": "cpp",
+        "*.tcc": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "memory": "cpp",
+        "optional": "cpp",
+        "string_view": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "stop_token": "cpp",
+        "streambuf": "cpp",
+        "thread": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
         "deque": "cpp",
+        "list": "cpp",
         "string": "cpp",
         "vector": "cpp",
-        "__split_buffer": "cpp",
-        "list": "cpp",
-        "iostream": "cpp"
+        "mutex": "cpp",
+        "condition_variable": "cpp"
     }
 }
