@@ -100,7 +100,7 @@ void sync_process()
                     printf("throw img1\n");
                 }
                 else
-                // 这里的话就是时间对其了的话
+                // 这里的话就是时间对齐了的话
                 {
                     time = img0_buf.front()->header.stamp.toSec();
                     header = img0_buf.front()->header;

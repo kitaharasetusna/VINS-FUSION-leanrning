@@ -422,7 +422,7 @@ void FeatureTracker::readIntrinsicParameter(const vector<string> &calib_file)
 {
     for (size_t i = 0; i < calib_file.size(); i++)
     {
-        ROS_INFO("reading paramerter of camera %s", calib_file[i].c_str());
+        // ROS_INFO("reading paramerter of camera %s", calib_file[i].c_str());
             //[ INFO] [1574931791.324250184]: reading paramerter of camera 4VINS_test/0config/yaml_mynt_s1030/params_left_my.yaml
         //定义了一个camera类
         camodocal::CameraPtr camera = CameraFactory::instance()->generateCameraFromYamlFile(calib_file[i]);
@@ -540,7 +540,7 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
         // 图像凭借hconcat（B,C，A）; // 等同于A=[B  C]
     else
         imTrack = imLeft.clone();
-    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
+    cv::cvtColor(imTrack, imTrack, cv::COLOR_GRAY2RGB);
         //将imTrack转换为彩色
 
     // -------------在左目图像上标记特征点

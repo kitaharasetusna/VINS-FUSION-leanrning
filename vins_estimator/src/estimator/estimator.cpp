@@ -100,9 +100,9 @@ void Estimator::setParameter()
     // 讲相机参数传入
     for (int i = 0; i < NUM_OF_CAM; i++)
     {
-        tic[i] = TIC[i];
-        ric[i] = RIC[i];
-        cout << " exitrinsic cam " << i << endl  << ric[i] << endl << tic[i].transpose() << endl;
+        tic[i] = TIC[i]; // 外参，平移向量
+        ric[i] = RIC[i]; // 外参，旋转矩阵
+        // cout << " exitrinsic cam " << i << endl  << ric[i] << endl << tic[i].transpose() << endl;
     }
     f_manager.setRic(ric);//将相机参数传入特征点的管理器类中
 
@@ -111,17 +111,17 @@ void Estimator::setParameter()
     ProjectionOneFrameTwoCamFactor::sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
     td = TD;//时间的误差量
     g = G;//理想的中立加速度
-    cout << "set g " << g.transpose() << endl;
+    // cout << "set g " << g.transpose() << endl;
     // 将相机参数传入到特征跟踪的类里  set g 0 0 9.81007
     featureTracker.readIntrinsicParameter(CAM_NAMES);//读取相机的内部参数，CAM_NAMES是相机参数的路径
 
-    std::cout << "MULTIPLE_THREAD is " << MULTIPLE_THREAD << '\n';
-        //MULTIPLE_THREAD is 1
+    // std::cout << "MULTIPLE_THREAD is " << MULTIPLE_THREAD << '\n';
+    //MULTIPLE_THREAD is 1
     if (MULTIPLE_THREAD && !initThreadFlag)
-    // 如果是单线程，且线程没有chuli则开启开启了一个Estimator类内的新线程：processMeasurements();
+    // 如果是多线程，且线程没有初始化则开启了一个Estimator类内的新线程：processMeasurements();
     {
         initThreadFlag = true;
-        //申明并定义一个 处理 的线程 但是没有运行？？
+        //申明并定义一个 处理 的线程，并一直运行（while循环在函数中）
         processThread = std::thread(&Estimator::processMeasurements, this);
     }
     mProcess.unlock();
@@ -170,9 +170,9 @@ void Estimator::changeSensorType(int use_imu, int use_stereo)
 // 之后执行processMeasurements
 void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
 {        
-    setParameter();
+    // setParameter(); // 不需要每次有图片就设置参数，开始已经设置过了
 
-    inputImageCnt++;//、
+    inputImageCnt++;
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
     // 数据格式为feature_id camera_id（0或1） xyz_uv_velocity（空间坐标，像素坐标和像素速度）
 
@@ -192,7 +192,7 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     }
     
     if(MULTIPLE_THREAD) //FIXME: 多线程的处理还是很迷糊 
-    {     
+    {
         if(inputImageCnt % 2 == 0)
         {
             mBuf.lock();
@@ -206,7 +206,8 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
         featureBuf.push(make_pair(t, featureFrame));
         mBuf.unlock();
         TicToc processTime;
-        processMeasurements(); //这里才执行了processMeasurements这个线程
+        printf("before process");
+        processMeasurements(); //如果不使用多线程则需要手动执行processMeasurements
         printf("process time: %f\n", processTime.toc());
     }
     
@@ -364,7 +365,7 @@ void Estimator::processMeasurements()
             mProcess.unlock();
         }
 
-        if (! MULTIPLE_THREAD)
+        if (! MULTIPLE_THREAD) // 不是多线程，需要break while循环
             break;
 
         std::chrono::milliseconds dura(2);
@@ -617,7 +618,7 @@ void Estimator::processImage
             predictPtsInNextFrame();
         }
             
-        ROS_DEBUG("solver costs: %fms", t_solve.toc());
+        ROS_DEBUG("optimization solver costs: %fms", t_solve.toc());
 
         if (failureDetection())
         {
