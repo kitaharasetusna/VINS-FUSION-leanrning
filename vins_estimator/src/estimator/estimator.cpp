@@ -193,17 +193,17 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     
     if(MULTIPLE_THREAD) //FIXME: 多线程的处理还是很迷糊 
     {
-        if(inputImageCnt % 2 == 0)
+        if(inputImageCnt % 2 == 0) // 如果多线程，则每两帧push一次。为什么呢？似乎是为了加速运行
         {
             mBuf.lock();
-            featureBuf.push(make_pair(t, featureFrame));
+            featureBuf.push(make_pair(t, featureFrame)); 
             mBuf.unlock();
         }
     }
     else
     {
         mBuf.lock();
-        featureBuf.push(make_pair(t, featureFrame));
+        featureBuf.push(make_pair(t, featureFrame)); // 单线程，每次都要push
         mBuf.unlock();
         TicToc processTime;
         printf("before process");
@@ -244,7 +244,7 @@ void Estimator::inputFeature(double t, const map<int, vector<pair<int, Eigen::Ma
         processMeasurements();
 }
 
-// 对imu的时间进行判断，讲队列里的imu数据放入到accVector和gyrVector中，完成之后返回true
+// 对imu的时间进行判断，将队列里的imu数据放入到accVector和gyrVector中，完成之后返回true
 bool Estimator::getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector, 
                                 vector<pair<double, Eigen::Vector3d>> &gyrVector)
 {
@@ -265,7 +265,7 @@ bool Estimator::getIMUInterval(double t0, double t1, vector<pair<double, Eigen::
             accBuf.pop();//.pop删除栈顶元素
             gyrBuf.pop();
         }
-        // 讲队列里所有的acc和gyr输入到accvector个gyrvector中
+        // 将队列里所有的acc和gyr输入到accvector个gyrvector中
         while (accBuf.front().first < t1)
         {
             accVector.push_back(accBuf.front());
@@ -273,7 +273,7 @@ bool Estimator::getIMUInterval(double t0, double t1, vector<pair<double, Eigen::
             gyrVector.push_back(gyrBuf.front());
             gyrBuf.pop();
         }
-        accVector.push_back(accBuf.front());
+        accVector.push_back(accBuf.front()); // this would be slightly larger than t1
         gyrVector.push_back(gyrBuf.front());
     }
     else
@@ -304,9 +304,9 @@ void Estimator::processMeasurements()
         vector<pair<double, Eigen::Vector3d>> accVector, gyrVector;
         //处理特征点的buf
         if(!featureBuf.empty())
-        {            
+        {
             feature = featureBuf.front();//.front()返回当前vector容器中起始元素的引用。
-            curTime = feature.first + td;//td的使用是在图像的时间上加上这个值
+            curTime = feature.first + td;//td是图像和IMU的time offset，在图像的时间上加上这个值
             while(1)
             {
                 if ((!USE_IMU  || IMUAvailable(feature.first + td)))//如果不用imu或者
@@ -316,13 +316,13 @@ void Estimator::processMeasurements()
                     printf("wait for imu ... \n");
                     if (! MULTIPLE_THREAD)
                         return;
-                    std::chrono::milliseconds dura(5);//定义5ms的延迟
-                    std::this_thread::sleep_for(dura);//这个线程延迟5ms
+                    std::chrono::milliseconds dura(5);//定义5ms
+                    std::this_thread::sleep_for(dura);//这个线程休眠5ms
                 }
             }
             mBuf.lock();
             if(USE_IMU)
-                // 对imu的时间进行判断，讲队列里的imu数据放入到accVector和gyrVector中，完成之后返回true
+                // 对imu的时间进行判断，将队列里的imu数据放入到accVector和gyrVector中，完成之后返回true
                 getIMUInterval(prevTime, curTime, accVector, gyrVector);
 
             featureBuf.pop();//每次运行完之后都删除featureBuf中的元素，直到为空，已经把要删除的这个值给了feature
@@ -390,7 +390,7 @@ void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVecto
     averAcc = averAcc / n;
     printf("averge acc %f %f %f\n", averAcc.x(), averAcc.y(), averAcc.z());
 
-    Matrix3d R0 = Utility::g2R(averAcc);
+    Matrix3d R0 = Utility::g2R(averAcc); //从输入的加速度和重力加速度得到一个初始位姿
     double yaw = Utility::R2ypr(R0).x();
     R0 = Utility::ypr2R(Eigen::Vector3d{-yaw, 0, 0}) * R0;//另初始的航向为0
     Rs[0] = R0;
@@ -419,17 +419,19 @@ void Estimator::processIMU(double t, double dt, const Vector3d &linear_accelerat
     }
 
     // 如果是新的一帧,则新建一个预积分项目
+    // std::cout << "frame_count === "<<frame_count<<std::endl;
     if (!pre_integrations[frame_count])
     {
+        // std::cout << "Bas frame_count = "<<Bas[frame_count]<<std::endl;
         pre_integrations[frame_count] = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
     }
 
-    //f rame_count是窗内图像帧的计数
-    // 一个窗内有是个相机帧，每个相机帧之间又有多个IMU数据
+    // frame_count是窗内图像帧的计数
+    // 一个窗内有10个相机帧，每个相机帧之间又有多个IMU数据
     if (frame_count != 0)
     {
+        // push_back进行了重载，在push_back这个函数里边就已经进行了预积分
         pre_integrations[frame_count]->push_back(dt, linear_acceleration, angular_velocity);
-        // push_back进行了重载，的时候就已经进行了预积分
 
         //if(solver_flag != NON_LINEAR)
             tmp_pre_integration->push_back(dt, linear_acceleration, angular_velocity);//这个是输入到图像中的预积分值

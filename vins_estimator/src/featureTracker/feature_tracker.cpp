@@ -186,7 +186,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         for (int i = 0; i < int(cur_pts.size()); i++)
             if (status[i] && !inBorder(cur_pts[i]))// 如果这个点不在图像内，则剔除
                 status[i] = 0;
-        reduceVector(prev_pts, status);
+        reduceVector(prev_pts, status); // 按照status中的状态，删除prev_pts中追踪不好的元素
         reduceVector(cur_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
@@ -194,7 +194,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         printf("track cnt %d\n", (int)ids.size());
     }
 
-    for (auto &n : track_cnt)
+    for (auto &n : track_cnt) //保存了当前追踪到的角点一共被多少帧图像追踪到，所以在这里+1
         n++;
 
     // --------------对所有的帧，先计算一个mask，然后检测器特征点是否够多，不够多则提取新的，存入到cur_pts
@@ -218,8 +218,8 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
             if (mask.type() != CV_8UC1)
                 cout << "mask type wrong " << endl;
             /* goodFeaturesToTrack
-            _image：8位或32位浮点型输入图像，单通道
-            _corners：保存检测出的角点
+            cur_img：8位或32位浮点型输入图像，单通道
+            n_pts：保存检测出的角点
             maxCorners：角点数目最大值，如果实际检测的角点超过此值，则只返回前maxCorners个强角点
             qualityLevel：角点的品质因子
             minDistance：对于初选出的角点而言，如果在其周围minDistance范围内存在其他更强角点，则将此角点删除
@@ -329,7 +329,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
     hasPrediction = false;
     prevLeftPtsMap.clear();
     for(size_t i = 0; i < cur_pts.size(); i++)
-        prevLeftPtsMap[ids[i]] = cur_pts[i];
+        prevLeftPtsMap[ids[i]] = cur_pts[i]; //prevLeftPtsMap上一帧的左目中的点 //ids这个好像就是当前帧特征点数目的索引
 
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
     for (size_t i = 0; i < ids.size(); i++)
